@@ -59,6 +59,7 @@
         select {
             background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
             background-repeat: no-repeat; background-position: right 20px center; background-size: 1.1em;
+            cursor: pointer;
         }
 
         .history-header {
@@ -85,9 +86,12 @@
 <div class="container">
     <h1>SPEAKERBOT</h1>
 
-    <span class="label-style">PREMIUM STIMMEN (DE/EN)</span>
+    <span class="label-style">STIMMAUSWAHL</span>
     <div class="controls">
-        <select id="voiceSelect"><option>Lade Stimmen...</option></select>
+        <select id="genderSelect">
+            <option value="male" selected>Männliche Stimme (Premium)</option>
+            <option value="female">Weibliche Stimme (Premium)</option>
+        </select>
         <input type="text" id="textInput" placeholder="Was soll ich sagen?" enterkeyhint="send" autofocus>
     </div>
     
@@ -102,65 +106,49 @@
 
 <script>
     const input = document.getElementById('textInput');
-    const voiceSelect = document.getElementById('voiceSelect');
+    const genderSelect = document.getElementById('genderSelect');
     const historyList = document.getElementById('historyList');
     const clearBtn = document.getElementById('clearBtn');
     
     let synth = window.speechSynthesis;
-    let filteredVoices = [];
     let history = JSON.parse(localStorage.getItem('premium_bot_history')) || [];
 
-    function populateVoiceList() {
-        const allVoices = synth.getVoices();
-        if (allVoices.length === 0) return;
+    // Logik zur Auswahl der besten Stimme basierend auf Geschlecht
+    function getBestVoice(gender) {
+        const voices = synth.getVoices().filter(v => v.lang.startsWith('de'));
+        
+        // Prioritäten-Listen für die automatische Logik
+        const malePriorities = ['Jonas', 'Siri', 'Stimme 1', 'Stimme 4', 'Yannick', 'Stefan', 'Markus', 'Google Deutsch'];
+        const femalePriorities = ['Katja', 'Siri', 'Stimme 2', 'Stimme 3', 'Anna', 'Petra', 'Google Deutsch'];
 
-        const getBest = (langCode) => {
-            return allVoices
-                .filter(v => v.lang.startsWith(langCode))
-                .sort((a, b) => {
-                    const score = (name) => {
-                        // Fokus auf Mobile Premium & Enhanced Stimmen
-                        if (name.includes('Premium')) return 30;
-                        if (name.includes('Enhanced')) return 25;
-                        if (name.includes('Siri')) return 20;
-                        if (name.includes('Jonas')) return 15;
-                        return 0;
-                    };
-                    return score(b.name) - score(a.name);
-                })
-                .slice(0, 8);
-        };
+        const priorities = (gender === 'male') ? malePriorities : femalePriorities;
 
-        filteredVoices = [...getBest('de'), ...getBest('en')];
-        const currentSelection = voiceSelect.value;
-        voiceSelect.innerHTML = '';
-
-        filteredVoices.forEach((voice) => {
-            const option = document.createElement('option');
-            // Namen kürzen für Mobile-Displays
-            let displayName = voice.name.replace('Microsoft ', '').replace('Google ', '').replace(' (Natural)', '');
-            option.textContent = displayName + ` (${voice.lang.split('-')[0].toUpperCase()})`;
-            option.value = voice.name;
-            
-            if (voice.name === currentSelection || (!currentSelection && (voice.name.includes('Siri') || voice.name.includes('Premium')))) {
-                option.selected = true;
-            }
-            voiceSelect.appendChild(option);
-        });
+        return voices.sort((a, b) => {
+            const score = (v) => {
+                let s = 0;
+                // Sucht nach Übereinstimmungen in der Prioritätenliste
+                priorities.forEach((name, index) => {
+                    if (v.name.includes(name)) s = Math.max(s, 100 - index);
+                });
+                // Bonus für Premium/Neural Tags
+                if (v.name.includes('Premium') || v.name.includes('Neural') || v.name.includes('Enhanced')) s += 50;
+                return s;
+            };
+            return score(b) - score(a);
+        })[0];
     }
 
+    // Initialisierung der Stimmen (Wichtig für Chrome/Safari)
     if (speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = populateVoiceList;
+        speechSynthesis.onvoiceschanged = () => { getBestVoice('male'); };
     }
-    
-    [100, 500, 1000, 3000].forEach(delay => setTimeout(populateVoiceList, delay));
 
     input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && input.value.trim() !== "") {
             speak(input.value);
             addToHistory(input.value);
             input.value = '';
-            input.blur();
+            input.blur(); 
         }
     });
 
@@ -175,9 +163,13 @@
     function speak(text) {
         synth.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        const selectedVoice = filteredVoices.find(v => v.name === voiceSelect.value);
-        if (selectedVoice) utterance.voice = selectedVoice;
-        utterance.rate = 1.0; 
+        const selectedVoice = getBestVoice(genderSelect.value);
+        
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
+        }
+        
+        utterance.rate = 0.95;
         synth.speak(utterance);
     }
 
