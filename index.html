@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Speakerbot Pro</title>
+    <style>
+        :root { 
+            --primary: #ffffff; 
+            --bg-top: #7e5c78; 
+            --bg-bottom: #4a3852; 
+            --label-color: rgba(255, 255, 255, 0.4); 
+            --input-bg: #f8f8f8;
+        }
+        
+        body { 
+            font-family: 'Helvetica Neue', Arial, sans-serif; 
+            display: flex; justify-content: center; align-items: center; 
+            min-height: 100vh; 
+            background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+            margin: 0; padding: 20px;
+        }
+
+        .container { 
+            background: rgba(255, 255, 255, 0.08); 
+            padding: 3rem; border-radius: 40px; 
+            width: 100%; max-width: 700px; 
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: var(--primary); text-transform: uppercase;
+            font-size: 5rem; font-weight: 900;
+            margin: 0 0 2rem 0; line-height: 0.9;
+            letter-spacing: -2px; text-align: center;
+        }
+
+        .label-style { 
+            font-size: 0.75rem; color: var(--label-color); 
+            text-transform: uppercase; font-weight: bold; letter-spacing: 1px;
+        }
+
+        .controls { display: flex; flex-direction: column; gap: 15px; margin: 10px 0 40px 0; }
+
+        select, input { 
+            width: 100%; padding: 18px 22px; border-radius: 18px; border: none;
+            background-color: var(--input-bg); font-size: 18px; color: #333; outline: none; 
+            box-sizing: border-box;
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 25px center; background-size: 1.1em;
+        }
+
+        .history-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-top: 1px solid rgba(255,255,255,0.1); padding-top: 25px; margin-bottom: 15px;
+        }
+
+        #clearBtn {
+            background: none; border: none; color: var(--label-color); 
+            cursor: pointer; font-size: 0.75rem; text-transform: uppercase; font-weight: bold;
+            padding: 0;
+        }
+
+        #clearBtn:hover { color: #fff; }
+
+        .history-item { 
+            padding: 12px 0; font-size: 16px; color: rgba(255,255,255,0.3);
+            cursor: pointer; transition: color 0.2s;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .history-item:hover { color: #fff; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>SPEAKERBOT</h1>
+
+    <span class="label-style">PREMIUM STIMMEN (DE/EN)</span>
+    <div class="controls">
+        <select id="voiceSelect"><option>Lade Stimmen...</option></select>
+        <input type="text" id="textInput" placeholder="Was soll ich sagen?" autofocus>
+    </div>
+    
+    <div class="history-section">
+        <div class="history-header">
+            <span class="label-style">VERLAUF</span>
+            <button id="clearBtn">VERLAUF LEEREN</button>
+        </div>
+        <div id="historyList"></div>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('textInput');
+    const voiceSelect = document.getElementById('voiceSelect');
+    const historyList = document.getElementById('historyList');
+    const clearBtn = document.getElementById('clearBtn');
+    
+    let synth = window.speechSynthesis;
+    let filteredVoices = [];
+    let history = JSON.parse(localStorage.getItem('premium_bot_history')) || [];
+
+    function populateVoiceList() {
+        const allVoices = synth.getVoices();
+        if (allVoices.length === 0) return;
+
+        const getBest = (langCode) => {
+            return allVoices
+                .filter(v => v.lang.startsWith(langCode))
+                .sort((a, b) => {
+                    const score = (name) => {
+                        if (name.includes('Jonas')) return 25;
+                        if (name.includes('Siri') && name.includes('4')) return 20;
+                        if (name.includes('Siri') && name.includes('1')) return 15;
+                        if (name.includes('Premium')) return 10;
+                        if (name.includes('Neural')) return 5;
+                        return 0;
+                    };
+                    return score(b.name) - score(a.name);
+                })
+                .slice(0, 6);
+        };
+
+        filteredVoices = [...getBest('de'), ...getBest('en')];
+        
+        // Nur neu bauen, wenn sich die Anzahl oder Auswahl geändert hat
+        const currentSelection = voiceSelect.value;
+        voiceSelect.innerHTML = '';
+
+        filteredVoices.forEach((voice) => {
+            const option = document.createElement('option');
+            option.textContent = voice.name.replace('Microsoft ', '').replace('Google ', '') + ` (${voice.lang.split('-')[0].toUpperCase()})`;
+            option.value = voice.name;
+            
+            // Auto-Select Logik
+            if (voice.name === currentSelection) {
+                option.selected = true;
+            } else if (!currentSelection && (voice.name.includes('Jonas') || (voice.name.includes('Siri') && voice.name.includes('4')))) {
+                option.selected = true;
+            }
+            
+            voiceSelect.appendChild(option);
+        });
+    }
+
+    // Wichtig für Chrome & Safari: Stimmen laden oft verzögert
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = populateVoiceList;
+    }
+    
+    // Mehrfacher Check für neu installierte Systemstimmen
+    [100, 500, 1000, 3000].forEach(delay => {
+        setTimeout(populateVoiceList, delay);
+    });
+
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && input.value.trim() !== "") {
+            speak(input.value);
+            addToHistory(input.value);
+            input.value = '';
+        }
+    });
+
+    clearBtn.addEventListener('click', () => {
+        if(confirm('Verlauf wirklich leeren?')) {
+            history = [];
+            localStorage.removeItem('premium_bot_history');
+            renderHistory();
+        }
+    });
+
+    function speak(text) {
+        synth.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        const selectedVoice = filteredVoices.find(v => v.name === voiceSelect.value);
+        if (selectedVoice) utterance.voice = selectedVoice;
+        utterance.rate = 0.95;
+        synth.speak(utterance);
+    }
+
+    function addToHistory(text) {
+        history = history.filter(item => item !== text);
+        history.unshift(text);
+        if (history.length > 8) history.pop();
+        localStorage.setItem('premium_bot_history', JSON.stringify(history));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        historyList.innerHTML = history.length ? '' : '<div class="history-item">Noch keine Einträge vorhanden</div>';
+        history.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.textContent = item;
+            div.onclick = () => speak(item);
+            historyList.appendChild(div);
+        });
+    }
+    renderHistory();
+</script>
+</body>
+</html>
