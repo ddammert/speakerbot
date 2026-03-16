@@ -4,84 +4,196 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Speakerbot Pro</title>
+    
     <link rel="apple-touch-icon" href="favicon.jpg">
+    <link rel="icon" type="image/jpeg" href="favicon.jpg">
+
     <style>
-        :root { --primary: #ffffff; --bg-top: #7e5c78; --bg-bottom: #4a3852; --label-color: rgba(255,255,255,0.4); --input-bg: #f8f8f8; }
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%); margin: 0; padding: 15px; box-sizing: border-box; }
-        .container { background: rgba(255,255,255,0.08); padding: 2rem; border-radius: 30px; width: 100%; max-width: 600px; box-sizing: border-box; backdrop-filter: blur(10px); }
-        h1 { color: var(--primary); text-transform: uppercase; font-size: clamp(2rem, 10vw, 4rem); font-weight: 900; margin: 0 0 1.5rem 0; text-align: center; }
-        .controls { display: flex; flex-direction: column; gap: 12px; }
-        select, input { width: 100%; padding: 16px; border-radius: 12px; border: none; font-size: 16px; }
+        :root { 
+            --primary: #ffffff; 
+            --bg-top: #7e5c78; 
+            --bg-bottom: #4a3852; 
+            --label-color: rgba(255, 255, 255, 0.4); 
+            --input-bg: #f8f8f8;
+        }
+        
+        body { 
+            font-family: 'Helvetica Neue', Arial, sans-serif; 
+            display: flex; justify-content: center; align-items: center; 
+            min-height: 100vh; 
+            background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+            margin: 0; padding: 15px; 
+            box-sizing: border-box;
+        }
+
+        .container { 
+            background: rgba(255, 255, 255, 0.08); 
+            padding: clamp(1.5rem, 5vw, 3rem); 
+            border-radius: clamp(20px, 5vw, 40px); 
+            width: 100%; max-width: 700px; 
+            box-sizing: border-box;
+            backdrop-filter: blur(10px);
+        }
+
+        h1 {
+            color: var(--primary); text-transform: uppercase;
+            font-size: clamp(2.5rem, 12vw, 5rem); 
+            font-weight: 900;
+            margin: 0 0 1.5rem 0; line-height: 0.9;
+            letter-spacing: -2px; text-align: center;
+        }
+
+        .label-style { 
+            font-size: 0.7rem; color: var(--label-color); 
+            text-transform: uppercase; font-weight: bold; letter-spacing: 1px;
+        }
+
+        .controls { display: flex; flex-direction: column; gap: 12px; margin: 10px 0 30px 0; }
+
+        select, input { 
+            width: 100%; 
+            padding: clamp(14px, 4vw, 18px) clamp(16px, 4vw, 22px); 
+            border-radius: 15px; border: none;
+            background-color: var(--input-bg); 
+            font-size: 16px; 
+            color: #333; outline: none; 
+            box-sizing: border-box;
+            -webkit-appearance: none;
+        }
+
+        select {
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 20px center; background-size: 1.1em;
+            cursor: pointer;
+        }
+
+        .history-header {
+            display: flex; justify-content: space-between; align-items: center;
+            border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-bottom: 10px;
+        }
+
+        #clearBtn {
+            background: none; border: none; color: var(--label-color); 
+            cursor: pointer; font-size: 0.7rem; text-transform: uppercase; font-weight: bold;
+        }
+
+        .history-item { 
+            padding: 12px 0; font-size: clamp(14px, 3.5vw, 16px); 
+            color: rgba(255,255,255,0.3);
+            cursor: pointer; transition: color 0.2s;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .history-item:hover { color: #fff; }
     </style>
 </head>
 <body>
+
 <div class="container">
     <h1>SPEAKERBOT</h1>
+
+    <span class="label-style">STIMMAUSWAHL</span>
     <div class="controls">
         <select id="genderSelect">
-            <option value="male" selected>MÄNNLICH (Premium/Siri)</option>
-            <option value="female">WEIBLICH (Premium/Siri)</option>
+            <option value="male" selected>Männlich (Premium/Siri)</option>
+            <option value="female">Weiblich (Premium/Siri)</option>
         </select>
-        <input type="text" id="textInput" placeholder="Schreib was..." enterkeyhint="send">
-        <div id="status" style="color: yellow; font-size: 10px; margin-top: 10px; text-align: center; opacity: 0.6;"></div>
+        <input type="text" id="textInput" placeholder="Was soll ich sagen?" enterkeyhint="send" autofocus>
+    </div>
+    
+    <div class="history-section">
+        <div class="history-header">
+            <span class="label-style">VERLAUF</span>
+            <button id="clearBtn">VERLAUF LEEREN</button>
+        </div>
+        <div id="historyList"></div>
     </div>
 </div>
 
 <script>
     const input = document.getElementById('textInput');
     const genderSelect = document.getElementById('genderSelect');
-    const status = document.getElementById('status');
+    const historyList = document.getElementById('historyList');
+    const clearBtn = document.getElementById('clearBtn');
+    
     let synth = window.speechSynthesis;
+    let history = JSON.parse(localStorage.getItem('premium_bot_history')) || [];
 
     function getBestVoice(gender) {
         let voices = synth.getVoices().filter(v => v.lang.startsWith('de'));
         if (voices.length === 0) return null;
 
-        // Suche gezielt nach männlichen Mustern
-        const maleNames = ['Jonas', 'Stimme 4', 'Stimme 1', 'Yannick', 'Stefan'];
-        const femaleNames = ['Katja', 'Stimme 3', 'Stimme 2', 'Anna'];
+        const malePriorities = ['Stimme 4', 'Stimme 1', 'Jonas', 'Siri', 'Yannick', 'Stefan'];
+        const femalePriorities = ['Stimme 3', 'Stimme 2', 'Katja', 'Anna (Erweitert)', 'Anna'];
+        const priorities = (gender === 'male') ? malePriorities : femalePriorities;
 
-        const targets = (gender === 'male') ? maleNames : femaleNames;
-
-        let selected = voices.sort((a, b) => {
+        return voices.sort((a, b) => {
             const score = (v) => {
                 let s = 0;
-                targets.forEach((t, i) => { if (v.name.includes(t)) s = Math.max(s, 100 - i); });
-                if (v.name.includes('Premium') || v.name.includes('Neural')) s += 50;
-                if (v.name === 'Anna') s -= 100; // Anna ist der Feind
+                priorities.forEach((p, i) => { if (v.name.includes(p)) s = Math.max(s, 100 - i); });
+                if (v.name.includes('Premium') || v.name.includes('Neural') || v.name.includes('Erweitert')) s += 50;
+                if (v.name === 'Anna' && !v.name.includes('Erweitert')) s -= 200;
                 return s;
             };
             return score(b) - score(a);
         })[0];
-
-        status.innerText = "Aktiv: " + selected.name;
-        return selected;
     }
 
-    // iOS Audio-Aktivierung
-    function start() {
+    // Audio-Unlock für iOS
+    function unlock() {
         const u = new SpeechSynthesisUtterance('');
         synth.speak(u);
-        status.innerText = "Engine bereit. Stimmen: " + synth.getVoices().filter(v => v.lang.startsWith('de')).length;
+        window.removeEventListener('touchstart', unlock);
     }
-    window.addEventListener('touchstart', start, {once: true});
+    window.addEventListener('touchstart', unlock);
 
     input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            synth.cancel();
-            const utterance = new SpeechSynthesisUtterance(input.value);
-            const voice = getBestVoice(genderSelect.value);
-            if (voice) utterance.voice = voice;
-            utterance.rate = 0.9;
-            synth.speak(utterance);
+        if (e.key === 'Enter' && input.value.trim() !== "") {
+            speak(input.value);
+            addToHistory(input.value);
             input.value = '';
-            input.blur();
+            input.blur(); 
         }
     });
 
-    // Stimmen laden
+    clearBtn.addEventListener('click', () => {
+        if(confirm('Verlauf leeren?')) {
+            history = [];
+            localStorage.removeItem('premium_bot_history');
+            renderHistory();
+        }
+    });
+
+    function speak(text) {
+        synth.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        const voice = getBestVoice(genderSelect.value);
+        if (voice) utterance.voice = voice;
+        utterance.rate = 0.95;
+        synth.speak(utterance);
+    }
+
+    function addToHistory(text) {
+        history = history.filter(item => item !== text);
+        history.unshift(text);
+        if (history.length > 8) history.pop();
+        localStorage.setItem('premium_bot_history', JSON.stringify(history));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        historyList.innerHTML = history.length ? '' : '<div class="history-item" style="opacity:0.5">Kein Verlauf</div>';
+        history.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.textContent = item;
+            div.onclick = () => { speak(item); input.value = item; };
+            historyList.appendChild(div);
+        });
+    }
+    renderHistory();
+    
     if (speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = () => { synth.getVoices(); };
+        speechSynthesis.onvoiceschanged = () => synth.getVoices();
     }
 </script>
 </body>
