@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Speakerbot Pro</title>
     
     <link rel="apple-touch-icon" href="favicon.jpg">
@@ -14,100 +14,137 @@
             --bg-top: #7e5c78; 
             --bg-bottom: #4a3852; 
             --label-color: rgba(255, 255, 255, 0.4); 
-            --input-bg: #f8f8f8;
+            --input-bg: #f8f8f8; 
         }
-        
+
         body { 
             font-family: 'Helvetica Neue', Arial, sans-serif; 
-            display: flex; justify-content: center; align-items: center; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
             min-height: 100vh; 
-            background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
-            margin: 0; padding: 15px; 
-            box-sizing: border-box;
-            overflow: hidden;
+            background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%); 
+            margin: 0; 
+            padding: 20px; 
+            box-sizing: border-box; 
+            overflow-y: auto; 
         }
 
         .container { 
-            background: rgba(255, 255, 255, 0.08); 
-            padding: clamp(1.5rem, 5vw, 3rem); 
-            border-radius: clamp(20px, 5vw, 40px); 
-            width: 100%; max-width: 700px; 
-            box-sizing: border-box;
-            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.1); 
+            padding: clamp(1.5rem, 5vw, 2.5rem); 
+            border-radius: 30px; 
+            width: 100%; 
+            max-width: 500px; 
+            box-sizing: border-box; 
+            backdrop-filter: blur(15px); 
+            -webkit-backdrop-filter: blur(15px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
         }
 
-        h1 {
-            color: var(--primary); text-transform: uppercase;
-            font-size: clamp(2.5rem, 12vw, 5rem); 
-            font-weight: 900;
-            margin: 0 0 1.5rem 0; line-height: 0.9;
-            letter-spacing: -2px; text-align: center;
+        h1 { 
+            color: var(--primary); 
+            text-transform: uppercase; 
+            font-size: clamp(2.5rem, 12vw, 4rem); 
+            font-weight: 900; 
+            margin: 0 0 1.5rem 0; 
+            text-align: center; 
+            letter-spacing: -2px; 
+            line-height: 0.8;
         }
 
         .label-style { 
-            font-size: 0.7rem; color: var(--label-color); 
-            text-transform: uppercase; font-weight: bold; letter-spacing: 1px;
+            font-size: 0.7rem; 
+            color: var(--label-color); 
+            text-transform: uppercase; 
+            font-weight: bold; 
+            display: block;
+            margin-bottom: 10px;
         }
 
-        .controls { display: flex; flex-direction: column; gap: 12px; margin: 10px 0 30px 0; }
+        .controls { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px; /* Gleicher Abstand zwischen den Feldern */
+            margin-bottom: 30px; 
+        }
 
+        /* Zentraler Fix für die Feld-Breite */
         select, input { 
-            width: 100%; 
-            padding: clamp(14px, 4vw, 18px) clamp(16px, 4vw, 22px); 
-            border-radius: 15px; border: none;
+            width: 100% !important; 
+            height: 60px; /* Einheitliche Höhe */
+            padding: 0 20px; 
+            border-radius: 20px; /* Etwas weichere Ecken wie im Bild */
+            border: none; 
             background-color: var(--input-bg); 
-            font-size: 16px; 
-            color: #333; outline: none; 
-            box-sizing: border-box;
-            -webkit-appearance: none;
+            font-size: 18px; 
+            color: #333; 
+            outline: none; 
+            -webkit-appearance: none; 
+            box-sizing: border-box; /* Verhindert das "Ausschlagen" der Breite */
+            display: block;
         }
 
         select {
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-            background-repeat: no-repeat; background-position: right 20px center; background-size: 1.1em;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 20px center;
+            background-size: 16px;
             cursor: pointer;
         }
 
-        .history-header {
-            display: flex; justify-content: space-between; align-items: center;
-            border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px; margin-bottom: 10px;
+        .history-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            border-top: 1px solid rgba(255,255,255,0.1); 
+            padding-top: 20px; 
+            margin-bottom: 15px;
         }
 
-        #clearBtn {
-            background: none; border: none; color: var(--label-color); 
-            cursor: pointer; font-size: 0.7rem; text-transform: uppercase; font-weight: bold;
+        #clearBtn { 
+            background: none; 
+            border: none; 
+            color: var(--label-color); 
+            cursor: pointer; 
+            font-size: 0.75rem; 
+            font-weight: bold; 
+            text-transform: uppercase;
         }
 
         .history-item { 
-            padding: 12px 0; font-size: clamp(14px, 3.5vw, 16px); 
-            color: rgba(255,255,255,0.3);
-            cursor: pointer; transition: color 0.2s;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            padding: 14px 20px; 
+            font-size: 16px; 
+            color: rgba(255,255,255,0.7); 
+            cursor: pointer; 
+            background: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            margin-bottom: 10px;
+            transition: background 0.2s;
         }
-        .history-item:hover { color: #fff; }
+        
+        .history-item:active { background: rgba(255,255,255,0.15); }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>SPEAKERBOT</h1>
-
-    <span class="label-style">ONLINE STIMMEN AKTIV</span>
+    
+    <span class="label-style">STIMMAUSWAHL</span>
     <div class="controls">
         <select id="genderSelect">
-            <option value="male" selected>Männlich (Online/Premium)</option>
-            <option value="female">Weiblich (Online/Premium)</option>
+            <option value="male" selected>Männlich</option>
+            <option value="female">Weiblich</option>
         </select>
-        <input type="text" id="textInput" placeholder="Was soll ich sagen?" enterkeyhint="send" autofocus>
+        <input type="text" id="textInput" placeholder="Schreib was..." enterkeyhint="send" autofocus>
     </div>
     
-    <div class="history-section">
-        <div class="history-header">
-            <span class="label-style">VERLAUF</span>
-            <button id="clearBtn">VERLAUF LEEREN</button>
-        </div>
-        <div id="historyList"></div>
+    <div class="history-header">
+        <span class="label-style">VERLAUF</span>
+        <button id="clearBtn">LEEREN</button>
     </div>
+    <div id="historyList"></div>
 </div>
 
 <script>
@@ -115,113 +152,81 @@
     const genderSelect = document.getElementById('genderSelect');
     const historyList = document.getElementById('historyList');
     const clearBtn = document.getElementById('clearBtn');
-    
     let synth = window.speechSynthesis;
     let history = JSON.parse(localStorage.getItem('premium_bot_history')) || [];
 
-    function initVoices() {
-        synth.getVoices();
-    }
+    function loadVoices() { synth.getVoices(); }
+    loadVoices();
     if (speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = initVoices;
+        speechSynthesis.onvoiceschanged = loadVoices;
     }
-    initVoices();
 
     function getBestVoice(gender) {
         let voices = synth.getVoices().filter(v => v.lang.startsWith('de'));
         if (voices.length === 0) return null;
-
-        // Fokus auf Online-Stimmen (Google) und moderne Neural-Stimmen
-        const malePriorities = ['Google Deutsch', 'Google de-DE', 'Microsoft Stefan Online', 'Siri Stimme 4', 'Jonas'];
-        const femalePriorities = ['Google Deutsch', 'Google de-DE', 'Microsoft Katja Online', 'Siri Stimme 3', 'Katja'];
-
-        const priorities = (gender === 'male') ? malePriorities : femalePriorities;
-
+        const malePrio = ['Stimme 4', 'Jonas', 'Yannick', 'Stefan', 'Google'];
+        const femalePrio = ['Stimme 3', 'Katja', 'Anna', 'Google'];
+        const targets = (gender === 'male') ? malePrio : femalePrio;
         return voices.sort((a, b) => {
             const score = (v) => {
                 let s = 0;
-                const name = v.name;
-                
-                // Extrem hohe Priorität für Google Online Stimmen
-                if (name.includes('Google')) s += 100;
-                
-                // Priorität für Online-Tags
-                if (name.includes('Online') || name.includes('Neural')) s += 50;
-
-                priorities.forEach((pName, index) => {
-                    if (name.includes(pName)) s = Math.max(s, 150 - index);
-                });
-
-                // Anna radikal nach unten schieben
-                if (name === 'Anna') s -= 300;
-
+                targets.forEach((t, i) => { if (v.name.includes(t)) s = Math.max(s, 200 - i); });
+                if (gender === 'male' && (v.name.includes('Anna') || v.name.includes('Katja'))) s -= 1000;
                 return s;
             };
             return score(b) - score(a);
         })[0];
     }
 
-    function unlockAudio() {
-        const utter = new SpeechSynthesisUtterance('');
+    function speak(text) {
+        synth.cancel();
+        const utter = new SpeechSynthesisUtterance(text);
+        const voice = getBestVoice(genderSelect.value);
+        if (voice) {
+            utter.voice = voice;
+            if (genderSelect.value === 'male' && (voice.name.includes('Anna') || voice.name.includes('Siri'))) {
+                utter.pitch = 0.65;
+            }
+        }
         synth.speak(utter);
-        window.removeEventListener('touchstart', unlockAudio);
-        window.removeEventListener('click', unlockAudio);
     }
-    window.addEventListener('touchstart', unlockAudio);
-    window.addEventListener('click', unlockAudio);
+
+    window.addEventListener('touchstart', () => {
+        synth.speak(new SpeechSynthesisUtterance(''));
+    }, {once: true});
 
     input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && input.value.trim() !== "") {
             speak(input.value);
             addToHistory(input.value);
             input.value = '';
-            input.blur(); 
+            input.blur();
         }
     });
-
-    clearBtn.addEventListener('click', () => {
-        if(confirm('Verlauf leeren?')) {
-            history = [];
-            localStorage.removeItem('premium_bot_history');
-            renderHistory();
-        }
-    });
-
-    function speak(text) {
-        synth.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        const selectedVoice = getBestVoice(genderSelect.value);
-        
-        if (selectedVoice) {
-            utterance.voice = selectedVoice;
-            console.log("Nutze Online-Stimme: " + selectedVoice.name);
-        }
-        
-        utterance.rate = 1.0; // Online Stimmen klingen bei 1.0 am besten
-        synth.speak(utterance);
-    }
 
     function addToHistory(text) {
-        history = history.filter(item => item !== text);
-        history.unshift(text);
-        if (history.length > 8) history.pop();
+        history = [text, ...history.filter(t => t !== text)].slice(0, 5);
         localStorage.setItem('premium_bot_history', JSON.stringify(history));
         renderHistory();
     }
 
     function renderHistory() {
-        historyList.innerHTML = history.length ? '' : '<div class="history-item" style="opacity:0.5">Kein Verlauf</div>';
-        history.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'history-item';
-            div.textContent = item;
-            div.onclick = () => {
-                speak(item);
-                input.value = item;
-            };
-            historyList.appendChild(div);
+        historyList.innerHTML = '';
+        history.forEach(t => {
+            const d = document.createElement('div');
+            d.className = 'history-item';
+            d.textContent = t;
+            d.onclick = () => speak(t);
+            historyList.appendChild(d);
         });
     }
+
+    clearBtn.onclick = () => { 
+        history = []; 
+        localStorage.removeItem('premium_bot_history');
+        renderHistory(); 
+    };
+    
     renderHistory();
 </script>
 </body>
