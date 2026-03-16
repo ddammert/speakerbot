@@ -24,6 +24,7 @@
             background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
             margin: 0; padding: 15px; 
             box-sizing: border-box;
+            overflow: hidden;
         }
 
         .container { 
@@ -118,33 +119,56 @@
     let synth = window.speechSynthesis;
     let history = JSON.parse(localStorage.getItem('premium_bot_history')) || [];
 
+    // Erzwungene Initialisierung für iOS/Safari
+    function initVoices() {
+        synth.getVoices();
+    }
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+        speechSynthesis.onvoiceschanged = initVoices;
+    }
+    initVoices();
+
     function getBestVoice(gender) {
         let voices = synth.getVoices().filter(v => v.lang.startsWith('de'));
+        
         if (voices.length === 0) return null;
 
-        const malePriorities = ['Stimme 4', 'Stimme 1', 'Jonas', 'Siri', 'Yannick', 'Stefan'];
-        const femalePriorities = ['Stimme 3', 'Stimme 2', 'Katja', 'Anna (Erweitert)', 'Anna'];
+        // Prioritäten-Listen für die automatische Logik
+        const malePriorities = ['Stimme 4', 'Stimme 1', 'Jonas', 'Siri', 'Yannick', 'Stefan', 'Google Deutsch'];
+        const femalePriorities = ['Stimme 3', 'Stimme 2', 'Katja', 'Anna (Erweitert)', 'Anna', 'Google Deutsch'];
+
         const priorities = (gender === 'male') ? malePriorities : femalePriorities;
 
         return voices.sort((a, b) => {
             const score = (v) => {
                 let s = 0;
-                priorities.forEach((p, i) => { if (v.name.includes(p)) s = Math.max(s, 100 - i); });
-                if (v.name.includes('Premium') || v.name.includes('Neural') || v.name.includes('Erweitert')) s += 50;
-                if (v.name === 'Anna' && !v.name.includes('Erweitert')) s -= 200;
+                const name = v.name;
+                
+                priorities.forEach((pName, index) => {
+                    if (name.includes(pName)) s = Math.max(s, 100 - index);
+                });
+
+                // Bonus für hochwertige Varianten
+                if (name.includes('Premium') || name.includes('Neural') || name.includes('Enhanced') || name.includes('Erweitert')) {
+                    s += 50;
+                }
+                
+                // Radikale Abwertung der Basis-Anna auf iOS
+                if (name === 'Anna' && !name.includes('Erweitert')) s -= 200;
+
                 return s;
             };
             return score(b) - score(a);
         })[0];
     }
 
-    // Audio-Unlock für iOS
-    function unlock() {
-        const u = new SpeechSynthesisUtterance('');
-        synth.speak(u);
-        window.removeEventListener('touchstart', unlock);
+    // iOS Audio-Unlock: Ein leerer Sound entsperrt die Engine
+    function unlockAudio() {
+        const utter = new SpeechSynthesisUtterance('');
+        synth.speak(utter);
+        window.removeEventListener('touchstart', unlockAudio);
     }
-    window.addEventListener('touchstart', unlock);
+    window.addEventListener('touchstart', unlockAudio);
 
     input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && input.value.trim() !== "") {
@@ -166,8 +190,14 @@
     function speak(text) {
         synth.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
-        const voice = getBestVoice(genderSelect.value);
-        if (voice) utterance.voice = voice;
+        const selectedVoice = getBestVoice(genderSelect.value);
+        
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
+            // Debugging für dich: Zeigt in der Konsole, welche Stimme iOS wirklich nutzt
+            console.log("iOS nutzt jetzt: " + selectedVoice.name);
+        }
+        
         utterance.rate = 0.95;
         synth.speak(utterance);
     }
@@ -186,15 +216,14 @@
             const div = document.createElement('div');
             div.className = 'history-item';
             div.textContent = item;
-            div.onclick = () => { speak(item); input.value = item; };
+            div.onclick = () => {
+                speak(item);
+                input.value = item;
+            };
             historyList.appendChild(div);
         });
     }
     renderHistory();
-    
-    if (speechSynthesis.onvoiceschanged !== undefined) {
-        speechSynthesis.onvoiceschanged = () => synth.getVoices();
-    }
 </script>
 </body>
 </html>
